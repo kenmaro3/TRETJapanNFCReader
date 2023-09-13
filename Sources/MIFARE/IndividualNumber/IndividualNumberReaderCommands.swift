@@ -26,6 +26,11 @@ extension IndividualNumberReader {
         tag.sendCommand(apdu: adpu, completionHandler: completionHandler)
     }
     
+    internal func signature(tag: IndividualNumberCardTag, data: [UInt8], p1Parameter: UInt8, p2Parameter: UInt8, completionHandler: @escaping IndividualNumberReaderCompletionHandler){
+        let apdu = NFCISO7816APDU(instructionClass: 0x80, instructionCode: 0x2A, p1Parameter: p1Parameter, p2Parameter: p2Parameter, data: Data(data), expectedResponseLength: 256)
+        tag.sendCommand(apdu: apdu, completionHandler: completionHandler)
+    }
+    
     internal func verify(tag: IndividualNumberCardTag, pin: [UInt8], completionHandler: @escaping IndividualNumberReaderCompletionHandler) {
         let apdu = NFCISO7816APDU(instructionClass: 0x00, instructionCode: 0x20, p1Parameter: 0x00, p2Parameter: 0x80, data: Data(pin), expectedResponseLength: -1)
         

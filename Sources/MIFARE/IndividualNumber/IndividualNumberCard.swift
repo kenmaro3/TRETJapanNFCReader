@@ -17,6 +17,12 @@ public enum IndividualNumberCardItem: CaseIterable {
     case tokenInfo
     /// マイナンバー
     case individualNumber
+    
+    case basicInfo
+    
+    case getCertificate
+    
+    case signCertificate
 }
 
 public enum IndividualNumberCardApplication: CaseIterable {

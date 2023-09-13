@@ -25,9 +25,12 @@ public class IndividualNumberReader: MiFareReader {
     private var items: [IndividualNumberCardItem] = []
     
     private var cardInfoInputSupportAppPIN: [UInt8] = []
+    private var signaturePIN: [UInt8] = []
     
     private var lookupRemainingPINType: IndividualNumberCardPINType?
     private var lookupRemainingPINCompletion: ((Int?) -> Void)?
+    
+    private var nonce_string_sha1: String = ""
     
     private init() {
         fatalError()
@@ -47,6 +50,25 @@ public class IndividualNumberReader: MiFareReader {
         if let cardInfoInputSupportAppPIN = cardInfoInputSupportAppPIN.data(using: .utf8) {
             self.cardInfoInputSupportAppPIN = [UInt8](cardInfoInputSupportAppPIN)
         }
+        
+        self.beginScanning()
+    }
+    public func signature(nonce_string_sha1: String, signaturePIN: String){
+        self.items = [.signCertificate]
+        self.lookupRemainingPINType = nil
+        self.nonce_string_sha1 = nonce_string_sha1
+        print("nonce_string_sha1: \(nonce_string_sha1)")
+        
+        if let signaturePIN = signaturePIN.data(using: .utf8){
+            self.signaturePIN = [UInt8](signaturePIN)
+        }
+        self.beginScanning()
+    }
+    
+    public func get_no_need_pin(items: [IndividualNumberCardItem]) {
+        self.items = items
+        self.lookupRemainingPINType = nil
+        
         
         self.beginScanning()
     }
@@ -167,6 +189,7 @@ public class IndividualNumberReader: MiFareReader {
         }
     }
     
+    
     private func getItems(_ session: NFCTagReaderSession, _ individualNumberCard: IndividualNumberCard, completion: @escaping (IndividualNumberCard) -> Void) {
         var individualNumberCard = individualNumberCard
         
@@ -177,6 +200,13 @@ public class IndividualNumberReader: MiFareReader {
                     individualNumberCard = self.readJPKIToken(session, individualNumberCard)
                 case .individualNumber:
                     individualNumberCard = self.readIndividualNumber(session, individualNumberCard, cardInfoInputSupportAppPIN: self.cardInfoInputSupportAppPIN)
+                case .basicInfo:
+                    individualNumberCard = self.readInfo(session, individualNumberCard, cardInfoInputSupportAppPIN: self.cardInfoInputSupportAppPIN)
+                case .getCertificate:
+                    individualNumberCard = self.get_certificate(session, individualNumberCard)
+                
+                case .signCertificate:
+                    individualNumberCard = self.signCertificate(session, individualNumberCard, cardInfoInputSupportAppPIN: self.signaturePIN, data_sha1: self.nonce_string_sha1)
                 }
             }
             completion(individualNumberCard)
